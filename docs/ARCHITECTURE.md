@@ -1375,7 +1375,7 @@ HELLO 包含：
 
 HELLO 首次注册使用 Registration Token；Hub 返回的 Agent Credential 持久化后用于后续连接和 Agent Artifact 请求。
 
-节点纳管命令可通过 `node_name` / `node_ip`（Native YAML）或 `CADENTRA_NODE_NAME` / `CADENTRA_NODE_IP`（Docker 环境变量）指定 HELLO 上报的节点名称和 IP；未指定时 Agent 继续使用本机探测值。Web 页面生成命令时使用当前页面地址作为 Hub 地址来源，并保留配置的 Agent Gateway 端口。
+节点纳管命令可通过 `node_name` / `node_ip`（Native YAML）或 `CADENTRA_NODE_NAME` / `CADENTRA_NODE_IP`（Docker 环境变量）指定 HELLO 上报的节点名称和节点地址。节点地址支持 IPv4、IPv6 或 DNS 主机名，并在生成命令时保持原值；未指定时 Agent 继续使用本机探测值。Web 页面生成命令时使用当前页面地址作为 Hub 地址来源，并保留配置的 Agent Gateway 端口。
 
 ---
 

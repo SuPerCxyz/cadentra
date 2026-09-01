@@ -1,0 +1,13 @@
+.git
+.github
+.opencode
+bin
+hub
+agent
+web/node_modules
+web/dist
+web/.vitest-attachments
+web/src/components/__screenshots__
+*.db
+*.db-shm
+*.db-wal

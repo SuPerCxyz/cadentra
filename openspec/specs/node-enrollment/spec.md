@@ -5,21 +5,21 @@ Give administrators a single Nodes-page workflow for enrolling Native and Docker
 ## Requirements
 ### Requirement: Show enrollment methods
 
-The Nodes page SHALL provide an administrator-only Add Node workflow with required node name and node IP fields, an editable Hub address defaulted to the current web page origin, and Native, `docker run`, and standalone `docker compose` methods.
+The Nodes page SHALL provide an administrator-only Add Node workflow with required node name and node address fields accepting an IPv4/IPv6 address or DNS hostname, an editable Hub address defaulted to the current web page origin, and Native, `docker run`, and standalone `docker compose` methods.
 
 #### Scenario: Open Add Node
 
 - **WHEN** an administrator opens Add Node
-- **THEN** the page shows required node name and node IP inputs, a Hub address prefilled from the current page origin, and the three enrollment methods
+- **THEN** the page shows required node name and node address inputs, a Hub address prefilled from the current page origin, and the three enrollment methods
 
 #### Scenario: Generate enrollment commands
 
-- **WHEN** the administrator submits a valid node name, node IP, and Hub address
-- **THEN** the Hub returns commands containing the node identity, registration token, and an Agent Gateway URL derived from the supplied Hub address and configured Gateway port
+- **WHEN** the administrator submits a valid node name, IPv4/IPv6 address or DNS hostname, and Hub address
+- **THEN** the Hub returns commands containing the node identity, the supplied address unchanged, registration token, and an Agent Gateway URL derived from the supplied Hub address and configured Gateway port
 
 #### Scenario: Reject invalid node identity
 
-- **WHEN** the administrator submits an empty/invalid node name or an invalid node IP
+- **WHEN** the administrator submits an empty/invalid node name or an invalid node address
 - **THEN** the Hub rejects the request without generating commands
 
 #### Scenario: Copy enrollment command

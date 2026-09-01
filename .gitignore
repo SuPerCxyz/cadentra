@@ -1,7 +1,7 @@
 # Binaries
 bin/
-hub
-agent
+/hub
+/agent
 *.exe
 
 # Web

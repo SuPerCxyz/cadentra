@@ -84,6 +84,34 @@ func TestNodeEnrollmentMetadata(t *testing.T) {
 		!strings.Contains(result["docker_compose"], "CADENTRA_DEPLOYMENT_MODE: docker") {
 		t.Fatalf("unexpected enrollment metadata: %+v", result)
 	}
+
+	domainParams := url.Values{
+		"node_name":   {"edge-node-domain"},
+		"node_ip":     {"agent.example.com"},
+		"hub_address": {"http://public.example:8080"},
+	}
+	domainReq, err := http.NewRequest(http.MethodGet, ts.URL+"/api/nodes/enrollment?"+domainParams.Encode(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	domainReq.Header.Set("Authorization", "Bearer "+session.Token)
+	domainResp, err := http.DefaultClient.Do(domainReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer domainResp.Body.Close()
+	if domainResp.StatusCode != http.StatusOK {
+		t.Fatalf("domain enrollment status %d", domainResp.StatusCode)
+	}
+	var domainResult map[string]string
+	if err := json.NewDecoder(domainResp.Body).Decode(&domainResult); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(domainResult["native"], "node_ip: \"agent.example.com\"") ||
+		!strings.Contains(domainResult["docker_run"], "CADENTRA_NODE_IP='agent.example.com'") ||
+		!strings.Contains(domainResult["docker_compose"], "CADENTRA_NODE_IP: \"agent.example.com\"") {
+		t.Fatalf("domain address was not preserved: %+v", domainResult)
+	}
 }
 
 func TestNodeEnrollmentRejectsInvalidIdentity(t *testing.T) {
@@ -117,7 +145,7 @@ func TestNodeEnrollmentRejectsInvalidIdentity(t *testing.T) {
 	}
 	json.NewDecoder(login.Body).Decode(&session)
 	login.Body.Close()
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/nodes/enrollment?node_name=bad%20name&node_ip=not-an-ip", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/nodes/enrollment?node_name=valid-node&node_ip=-invalid.example.com", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

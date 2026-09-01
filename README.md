@@ -76,7 +76,7 @@ Hub 是 Desired State 的唯一权威源；Agent 主动连接 Hub，缓存已同
 ### 1. 获取源码并构建
 
 ```bash
-git clone https://github.com/cadentra/cadentra.git
+git clone https://github.com/SuPerCxyz/cadentra.git
 cd cadentra
 
 make web         # 安装前端依赖
@@ -124,7 +124,16 @@ docker compose up -d --build
 
 Compose 默认同时提供 Hub 和一个 Docker Agent。Agent 数据保存在 agent-data 卷，Hub 数据和制品保存在 hub-data 卷。
 
-如需从其他网络接入 Agent，将 HUB_GATEWAY_BASE_URL 设置为 Agent 可访问的 Gateway 地址。节点页面可以生成 Native、docker run 和 Docker Compose 纳管命令，并携带节点身份和 Registration Token。
+如需从其他网络接入 Agent，将 HUB_GATEWAY_BASE_URL 设置为 Agent 可访问的 Gateway 地址。节点页面可以生成 Native、docker run 和 Docker Compose 纳管命令，并携带节点身份和 Registration Token；节点地址支持 IPv4、IPv6 或 DNS 主机名。
+
+### CI 构建产物
+
+推送到 `master` 或版本标签后，GitHub Actions 会构建 Linux amd64 的 Hub/Agent 二进制并上传为构建制品，同时发布以下 GHCR 镜像：
+
+```text
+ghcr.io/supercxyz/cadentra-hub:latest
+ghcr.io/supercxyz/cadentra-agent:latest
+```
 
 ### systemd
 
@@ -196,8 +205,6 @@ openspec/            变更管理与规格文件
 - [docs/PRODUCT.md](docs/PRODUCT.md)：产品功能基线和一期范围
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：系统架构和一致性约束
 - [docs/TEST_PLAN.md](docs/TEST_PLAN.md)：测试计划
-- [docs/TEST_ENV.md](docs/TEST_ENV.md)：真实环境测试信息
-- [docs/TEST_ENV_SIM.md](docs/TEST_ENV_SIM.md)：KVM2 模拟环境测试记录
 - [docs/TRACEABILITY_MATRIX.md](docs/TRACEABILITY_MATRIX.md)：需求追踪矩阵
 
 ## 第三方声明

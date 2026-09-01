@@ -534,12 +534,12 @@ ROLLBACK
 - Deployment Mode
 - Capability
 
-节点页面提供管理员纳管向导。管理员必须指定节点名称和节点 IP，Hub 地址默认使用当前 Web 页面地址；向导生成的 Native、Docker 和 Compose 命令均包含节点身份及 Registration Token。
+节点页面提供管理员纳管向导。管理员必须指定节点名称和节点地址（IPv4/IPv6 或 DNS 域名），Hub 地址默认使用当前 Web 页面地址；向导生成的 Native、Docker 和 Compose 命令均包含节点身份及 Registration Token。
 
 Node 页面显示至少：
 - Node ID
 - Hostname
-- IP
+- IP 或域名
 - OS
 - Architecture
 - Labels
