@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  hub:
+    build:
+      context: .
+      dockerfile: packaging/docker/hub/Dockerfile
+    image: cadentra/hub:latest
+    container_name: cadentra-hub
+    restart: unless-stopped
+    ports:
+      - "${HUB_WEB_PORT:-8080}:8080"
+      - "${HUB_GATEWAY_PORT:-8443}:8443"
+    environment:
+      CADENTRA_WEB_ADDR: ":8080"
+      CADENTRA_GATEWAY_ADDR: ":8443"
+      CADENTRA_GATEWAY_BASE_URL: "${HUB_GATEWAY_BASE_URL:-}"
+      CADENTRA_REGISTRATION_TOKEN: "${REGISTRATION_TOKEN:-changeme}"
+      CADENTRA_BASE_URL: "${HUB_BASE_URL:-http://localhost:8080}"
+      CADENTRA_DATA_DIR: /var/lib/cadentra-hub
+      CADENTRA_ARTIFACT_DIR: /var/lib/cadentra-hub/artifacts
+      CADENTRA_MAX_FILE_TRANSFER_BYTES: "${MAX_FILE_TRANSFER_BYTES:-10737418240}"
+      CADENTRA_ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
+      CADENTRA_ADMIN_PASSWORD: "${ADMIN_PASSWORD:-change-me}"
+    volumes:
+      - hub-data:/var/lib/cadentra-hub
+
+  # 可选：Agent（Docker 基础模式）
+  agent:
+    build:
+      context: .
+      dockerfile: packaging/docker/agent/Dockerfile
+    image: cadentra/agent:latest
+    container_name: cadentra-agent
+    restart: unless-stopped
+    depends_on:
+      - hub
+    environment:
+      CADENTRA_HUB_URL: "ws://hub:8443"
+      CADENTRA_REGISTRATION_TOKEN: "${REGISTRATION_TOKEN:-changeme}"
+      CADENTRA_DEPLOYMENT_MODE: "docker"
+      CADENTRA_DATA_DIR: /var/lib/cadentra
+    volumes:
+      - agent-data:/var/lib/cadentra
+
+volumes:
+  hub-data:
+  agent-data:

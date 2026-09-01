@@ -1,0 +1,33 @@
+# Binaries
+bin/
+hub
+agent
+*.exe
+
+# Web
+web/node_modules/
+web/dist/
+
+# Data
+*.db
+*.db-wal
+*.db-shm
+/var/lib/
+
+# Env
+.env
+environment.local.yaml
+vm-inventory.local.yaml
+docs/TEST_ENV.md
+docs/TEST_ENV_SIM.md
+
+# Local QA artifacts
+/*.png
+web/.vitest-attachments/
+web/src/components/__screenshots__/
+.opencode/node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp

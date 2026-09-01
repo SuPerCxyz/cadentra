@@ -1,0 +1,358 @@
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { ColumnDef } from '@tanstack/react-table'
+import { Plus, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import { api, type FileTransfer, type Node } from '@/lib/api'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { CadentraHeader } from '@/components/layout/cadentra-header'
+import { Main } from '@/components/layout/main'
+import { DataTable } from '@/features/shared/data-table'
+import {
+  DropdownMenuItem,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  MoreMenu,
+  StatusBadge,
+  TimeValue,
+} from '@/features/shared/ui'
+
+type TargetDraft = { node_id: string; destination_path: string }
+
+export function FileTransfers() {
+  const { t } = useTranslation()
+  const client = useQueryClient()
+  const [sourceNodeID, setSourceNodeID] = useState('')
+  const [sourcePath, setSourcePath] = useState('')
+  const [targetNodeID, setTargetNodeID] = useState('')
+  const [destinationPath, setDestinationPath] = useState('')
+  const [targets, setTargets] = useState<TargetDraft[]>([])
+  const nodes = useQuery({
+    queryKey: ['nodes'],
+    queryFn: () => api.get<Node[]>('/nodes'),
+  })
+  const transfers = useQuery({
+    queryKey: ['transfers'],
+    queryFn: () => api.get<FileTransfer[]>('/transfers'),
+    refetchInterval: 3000,
+  })
+  const create = useMutation({
+    mutationFn: () =>
+      api.post<FileTransfer>('/transfers', {
+        source_node_id: sourceNodeID,
+        source_path: sourcePath,
+        targets,
+      }),
+    onSuccess: () => {
+      setSourcePath('')
+      setTargets([])
+      setTargetNodeID('')
+      setDestinationPath('')
+      client.invalidateQueries({ queryKey: ['transfers'] })
+      toast.success(t('transfers.created'))
+    },
+    onError: (error) => toast.error(error.message),
+  })
+  const { mutate: retryTransfer } = useMutation({
+    mutationFn: (id: string) => api.post(`/transfers/${id}/retry`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['transfers'] }),
+    onError: (error) => toast.error(error.message),
+  })
+  const { mutate: cancelTransfer } = useMutation({
+    mutationFn: (id: string) => api.post(`/transfers/${id}/cancel`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['transfers'] }),
+    onError: (error) => toast.error(error.message),
+  })
+  const nodeNames = useMemo(
+    () => new Map((nodes.data || []).map((node) => [node.id, node.hostname])),
+    [nodes.data]
+  )
+  const columns = useMemo<ColumnDef<FileTransfer>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: t('transfers.id'),
+        size: 180,
+        minSize: 160,
+        cell: ({ row }: { row: { original: FileTransfer } }) => (
+          <span
+            className='block truncate font-mono text-xs'
+            title={row.original.id}
+          >
+            {row.original.id.slice(0, 12)}...
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'source_node_id',
+        header: t('transfers.source'),
+        size: 120,
+        minSize: 110,
+        cell: ({ row }: { row: { original: FileTransfer } }) =>
+          nodeNames.get(row.original.source_node_id) ||
+          row.original.source_node_id,
+      },
+      {
+        accessorKey: 'source_path',
+        header: t('transfers.sourcePath'),
+        size: 340,
+        minSize: 240,
+        maxSize: 480,
+        cell: ({ row }: { row: { original: FileTransfer } }) => (
+          <span
+            className='block truncate font-mono text-xs'
+            title={row.original.source_path}
+          >
+            {row.original.source_path}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: t('common.status'),
+        size: 96,
+        minSize: 88,
+        meta: { align: 'center' },
+        cell: ({ row }: { row: { original: FileTransfer } }) => (
+          <StatusBadge status={row.original.status} />
+        ),
+      },
+      {
+        id: 'targets',
+        header: t('transfers.targets'),
+        size: 260,
+        minSize: 200,
+        cell: ({ row }: { row: { original: FileTransfer } }) => (
+          <div className='flex flex-wrap gap-1'>
+            {row.original.targets.map((target) => (
+              <span
+                key={target.node_id}
+                className='inline-flex max-w-full min-w-0 items-center gap-1 text-xs'
+              >
+                <span
+                  className='max-w-40 truncate'
+                  title={nodeNames.get(target.node_id) || target.node_id}
+                >
+                  {nodeNames.get(target.node_id) || target.node_id}
+                </span>
+                <StatusBadge status={target.status} />
+              </span>
+            ))}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'updated_at',
+        header: t('common.time'),
+        size: 180,
+        minSize: 160,
+        cell: ({ row }: { row: { original: FileTransfer } }) => (
+          <TimeValue value={row.original.updated_at} />
+        ),
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableHiding: false,
+        size: 72,
+        minSize: 64,
+        meta: { align: 'end' },
+        cell: ({ row }: { row: { original: FileTransfer } }) => (
+          <MoreMenu>
+            {row.original.status === 'FAILED' && (
+              <DropdownMenuItem onSelect={() => retryTransfer(row.original.id)}>
+                {t('transfers.retry')}
+              </DropdownMenuItem>
+            )}
+            {['PENDING', 'UPLOADING', 'DELIVERING'].includes(
+              row.original.status
+            ) && (
+              <DropdownMenuItem
+                onSelect={() => cancelTransfer(row.original.id)}
+              >
+                {t('transfers.cancel')}
+              </DropdownMenuItem>
+            )}
+          </MoreMenu>
+        ),
+      },
+    ],
+    [cancelTransfer, nodeNames, retryTransfer, t]
+  )
+  const addTarget = () => {
+    if (
+      !targetNodeID ||
+      !destinationPath ||
+      targets.some((target) => target.node_id === targetNodeID)
+    )
+      return
+    setTargets((current) => [
+      ...current,
+      { node_id: targetNodeID, destination_path: destinationPath },
+    ])
+    setTargetNodeID('')
+    setDestinationPath('')
+  }
+  const source = nodes.data?.find((node) => node.id === sourceNodeID)
+  return (
+    <>
+      <CadentraHeader
+        title={t('transfers.title')}
+        description={t('transfers.description')}
+      />
+      <Main fluid className='flex flex-1 flex-col gap-6'>
+        <Card className='w-full'>
+          <CardHeader>
+            <CardTitle className='text-sm'>
+              {t('transfers.newTransfer')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='grid gap-4 md:grid-cols-[minmax(180px,1fr)_minmax(0,2fr)_108px]'>
+              <label className='grid gap-2 text-sm'>
+                {t('transfers.source')}
+                <Select value={sourceNodeID} onValueChange={setSourceNodeID}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('transfers.selectSource')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(nodes.data || []).map((node) => (
+                      <SelectItem key={node.id} value={node.id}>
+                        {node.hostname}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className='grid gap-2 text-sm'>
+                {t('transfers.sourcePath')}
+                <Input
+                  value={sourcePath}
+                  onChange={(event) => setSourcePath(event.target.value)}
+                  placeholder='/var/lib/app/config.yaml'
+                  className='font-mono'
+                />
+              </label>
+              <div className='hidden md:block' aria-hidden='true' />
+            </div>
+            <div className='grid gap-4 md:grid-cols-[minmax(180px,1fr)_minmax(0,2fr)_108px]'>
+              <label className='grid gap-2 text-sm'>
+                {t('transfers.target')}
+                <Select value={targetNodeID} onValueChange={setTargetNodeID}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('transfers.selectTarget')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(nodes.data || [])
+                      .filter((node) => node.id !== sourceNodeID)
+                      .map((node) => (
+                        <SelectItem key={node.id} value={node.id}>
+                          {node.hostname}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className='grid gap-2 text-sm'>
+                {t('transfers.destinationPath')}
+                <Input
+                  value={destinationPath}
+                  onChange={(event) => setDestinationPath(event.target.value)}
+                  placeholder='/var/lib/app/config.yaml'
+                  className='font-mono'
+                />
+              </label>
+              <Button
+                type='button'
+                variant='outline'
+                className='w-full self-end'
+                onClick={addTarget}
+                disabled={!targetNodeID || !destinationPath}
+              >
+                <Plus className='size-4' />
+                {t('transfers.addTarget')}
+              </Button>
+            </div>
+            {targets.length > 0 && (
+              <div className='grid gap-2 text-sm'>
+                {targets.map((target) => (
+                  <div
+                    key={target.node_id}
+                    className='flex items-center justify-between rounded-md border px-3 py-2'
+                  >
+                    <span>
+                      <span className='font-medium'>
+                        {nodeNames.get(target.node_id) || target.node_id}
+                      </span>
+                      <span className='ms-3 font-mono text-xs text-muted-foreground'>
+                        {target.destination_path}
+                      </span>
+                    </span>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='size-8'
+                      onClick={() =>
+                        setTargets((current) =>
+                          current.filter(
+                            (item) => item.node_id !== target.node_id
+                          )
+                        )
+                      }
+                      aria-label={t('common.remove')}
+                    >
+                      <X className='size-4' />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button
+              onClick={() => create.mutate()}
+              disabled={
+                !source ||
+                !sourcePath ||
+                targets.length === 0 ||
+                create.isPending
+              }
+            >
+              {create.isPending
+                ? t('transfers.creating')
+                : t('transfers.start')}
+            </Button>
+          </CardContent>
+        </Card>
+        {transfers.isError ? (
+          <ErrorState
+            error={transfers.error}
+            onRetry={() => transfers.refetch()}
+          />
+        ) : transfers.isLoading ? (
+          <LoadingState />
+        ) : transfers.data?.length ? (
+          <DataTable
+            data={transfers.data}
+            columns={columns}
+            searchPlaceholder={t('transfers.searchPlaceholder')}
+          />
+        ) : (
+          <Card>
+            <EmptyState message={t('transfers.empty')} />
+          </Card>
+        )}
+      </Main>
+    </>
+  )
+}

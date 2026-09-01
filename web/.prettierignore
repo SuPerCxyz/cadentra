@@ -1,0 +1,16 @@
+# Ignore everything
+/*
+
+# Except application source and project configuration
+!/src
+!index.html
+!package.json
+!tsconfig.json
+!tsconfig.node.json
+!vite.config.ts
+!.prettierrc
+!README.md
+!eslint.config.js
+
+# Ignore auto-generated route tree
+/src/routeTree.gen.ts

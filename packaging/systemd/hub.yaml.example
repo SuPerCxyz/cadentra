@@ -1,0 +1,41 @@
+# Cadentra Hub 配置示例
+web_addr: ":8080"
+gateway_addr: ":8443"
+# Agent 可访问的 Gateway 公网/内网基址；留空时按 base_url 和 gateway_addr 推导。
+gateway_base_url: ""
+# 生产环境配置证书后启用 HTTPS/WSS；开发环境可留空使用 HTTP/WS。
+web_tls_cert: ""
+web_tls_key: ""
+gateway_tls_cert: ""
+gateway_tls_key: ""
+registration_token: "change-me"
+data_dir: "/var/lib/cadentra-hub"
+artifact_dir: "/var/lib/cadentra-hub/artifacts"
+base_url: "http://localhost:8080"
+admin_username: "admin"
+admin_password: "change-me"
+session_ttl: 24h
+revision_check_sec: 30
+changelog_window: 5000
+heartbeat_timeout: 90s
+max_file_transfer_bytes: 10737418240
+
+# OIDC 认证（可选）。配置 issuer 后启用 SSO，并禁用本地账号密码登录。
+# 未配置 issuer 时保持纯本地认证，行为不变。
+# oidc:
+#   issuer: "https://your-idp.example.com/realms/myrealm"
+#   client_id: "cadentra"
+#   redirect_url: "http://localhost:8080/api/oidc/callback"  # 默认 = base_url + /api/oidc/callback
+#   scopes: ["openid", "profile", "email"]
+#   username_claim: "preferred_username"   # fallback: email, sub
+#   role_claim: "groups"
+#   role_mappings:
+#     admins: "administrator"
+#     ops: "operator"
+#   default_role: "viewer"
+#
+# 注意：启用 OIDC 后本地登录被禁用。请确保 IdP 中存在可映射为 administrator
+# 的账号，否则将无法通过 Web UI 管理 Hub。
+# 环境变量覆盖：CADENTRA_OIDC_ISSUER / CADENTRA_OIDC_CLIENT_ID /
+# CADENTRA_OIDC_REDIRECT_URL / CADENTRA_OIDC_USERNAME_CLAIM /
+# CADENTRA_OIDC_ROLE_CLAIM / CADENTRA_OIDC_DEFAULT_ROLE

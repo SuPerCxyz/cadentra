@@ -1,0 +1,16 @@
+# Cadentra Agent 配置示例
+hub_url: "ws://hub.example.com:8443"
+registration_token: "change-me"
+# 可选：覆盖 Agent 注册时上报的节点名称和 IP。
+node_name: ""
+node_ip: ""
+deployment_mode: "native" # native | docker | docker_host_integration
+host_integration: false
+host_root: "/host"
+host_path_allowlist: ["/etc", "/opt", "/usr/local/bin", "/var/lib"]
+tls_ca_file: ""
+data_dir: "/var/lib/cadentra"
+agent_version: "0.1.0"
+heartbeat_sec: 30
+revision_check_sec: 45
+max_log_bytes: 1048576

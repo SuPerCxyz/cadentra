@@ -1,0 +1,18 @@
+import { type ImgHTMLAttributes } from 'react'
+import { cn } from '@/lib/utils'
+
+export function Logo({
+  className,
+  alt = 'Cadentra',
+  ...props
+}: ImgHTMLAttributes<HTMLImageElement>) {
+  return (
+    <img
+      id='cadentra-logo'
+      src='/images/cadentra-logo-original.png'
+      alt={alt}
+      className={cn('size-6 object-contain', className)}
+      {...props}
+    />
+  )
+}
